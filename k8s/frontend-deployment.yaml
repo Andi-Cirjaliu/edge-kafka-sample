@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-kafka-frontend-deployment
+spec:
+  selector:
+    matchLabels:
+      app: edge-kafka-frontend
+  template:
+    metadata:
+      labels:
+        app: edge-kafka-frontend
+    spec:
+      containers:
+      - name: edge-kafka-frontend
+        image: edge-kafka-frontend:1.0
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000

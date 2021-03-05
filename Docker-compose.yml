@@ -1,0 +1,36 @@
+version: '3'
+services: 
+  backend:
+    build: 
+      dockerfile: Dockerfile
+      context: ./backend
+    ports: 
+      - '4000:4000'
+    environment:
+      # works- with internal service name
+      - KAFKA_HOST=broker:29092
+      # works - with internal IP
+      # - KAFKA_HOST=172.19.0.3:29092
+      # Does not work - with internal service name but wrong port
+      # - KAFKA_HOST=broker:9092
+      # Does not work 
+      # - KAFKA_HOST=localhost:9092
+      # Does not work - with external IP
+      # - KAFKA_HOST=172.17.208.1:29092
+    # external_links: 
+    #   - broker
+  frontend:
+    build: 
+      dockerfile: Dockerfile
+      context: ./frontend
+    ports: 
+      - '3000:3000'
+    environment: 
+      - REACT_APP_SERVER_URL=http://localhost:4000/api/msg
+    depends_on: 
+      - backend
+
+networks:
+  default:
+    external:
+      name: kafka_default
