@@ -21,6 +21,9 @@ let messages = [];
 
 producer.on('ready', () => {
     console.log('Kafka is ready to send and receive messages...');
+
+    createTopic(KAFKA_TOPIC);
+    refreshMetadataf();
 });
 
 producer.on('error', (err) => {
@@ -81,6 +84,42 @@ const sendMessage = (msg) => {
       console.log("Send message <", msg, "> result:", data);
     });
   }
+}
+
+const createTopic = (topic) => {
+  console.log('Create topic ', topic);
+
+  let topicsToCreate = [{
+      topic: topic,
+      partitions: 1,
+      replicationFactor: 1
+    }];
+
+    producer.createTopics(topicsToCreate, (err, result) => {
+      if ( err) {
+        console.log('an error occured when creating topic ', topic);
+        console.log(err);
+      }
+
+      console.log('creating topic ', topic, ' result => ', result);
+    });
+}
+
+const refreshMetadataf = (msg) => {
+
+  //refresh metadata
+  if (!refreshMetadata) {
+    console.log("Refresh metadata...");
+    client.refreshMetadata((topics = [KAFKA_TOPIC]), (error) => {
+      if (error) {
+        return console.log("Refresh metadata failed with error: ", error);
+      }
+
+      console.log("Refresh metadata successful.");
+      refreshMetadata = true;
+
+    });
+  } 
 }
 
 const getMessages = () => {
