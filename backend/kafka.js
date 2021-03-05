@@ -5,8 +5,6 @@ const KAFKA_TOPIC = process.env.KAFKA_TOPIC;
 console.log('Kafka host: ', KAFKA_HOST);
 console.log('Kafka topics: ', KAFKA_TOPIC); 
 
-let refreshMetadata = false;
-
 const client = new kafka.KafkaClient({kafkaHost : KAFKA_HOST});
 
 // producer
@@ -19,26 +17,30 @@ console.log('Kafka consumer payloads: ', payloads);
 
 let messages = [];
 
-producer.on('ready', () => {
-    console.log('Kafka is ready to send and receive messages...');
+producer.on("ready", () => {
+  console.log("Kafka is ready to send and receive messages...");
 
-    createTopic(KAFKA_TOPIC);
-    refreshMetadataf();
+  createTopic(KAFKA_TOPIC);
+  refreshMetadata();
 });
 
-producer.on('error', (err) => {
-    console.log('An error occured in Kafka client: ', err);
+producer.on("error", (err) => {
+  console.log("An error occured in Kafka client: ", err);
 });
 
-consumer.on('message', (message) => {
-    console.log('A new message was received: ');
-    console.log(message);
+consumer.on("message", (message) => {
+  console.log("A new message was received: ");
+  console.log(message);
 
-    const newMsg = {value: message.value, position: message.offset, date: new Date()};
+  const newMsg = {
+    value: message.value,
+    position: message.offset,
+    date: new Date(),
+  };
 
-    messages = [...messages, newMsg];
-    console.log('Current messages:');
-    console.log(messages);
+  messages = [...messages, newMsg];
+  console.log("Current messages:");
+  console.log(messages);
 });
 
 const sendMessage = (msg) => {
@@ -46,81 +48,53 @@ const sendMessage = (msg) => {
 
   const payloads = [{ topic: "my_topic", messages: msg }];
 
-  //refresh metadata
-  if (!refreshMetadata) {
-    console.log("Refresh metadata...");
-    client.refreshMetadata((topics = [KAFKA_TOPIC]), (error) => {
-      if (error) {
-        return console.log("Refresh metadata failed with error: ", error);
-      }
+  producer.send(payloads, (error, data) => {
+    if (error) {
+      return console.log(
+        "An error occured when sending message <",
+        msg,
+        ">. error: ",
+        error
+      );
+    }
 
-      console.log("Refresh metadata successful.");
-      refreshMetadata = true;
-
-      producer.send(payloads, (error, data) => {
-        if (error) {
-          return console.log(
-            "An error occured when sending message <",
-            msg,
-            ">. error: ",
-            error
-          );
-        }
-
-        console.log("Send message <", msg, "> result:", data);
-      });
-    });
-  } else {
-    producer.send(payloads, (error, data) => {
-      if (error) {
-        return console.log(
-          "An error occured when sending message <",
-          msg,
-          ">. error: ",
-          error
-        );
-      }
-
-      console.log("Send message <", msg, "> result:", data);
-    });
-  }
-}
+    console.log("Send message <", msg, "> result:", data);
+  });
+};
 
 const createTopic = (topic) => {
-  console.log('Create topic ', topic);
+  console.log("Create topic ", topic);
 
-  let topicsToCreate = [{
+  let topicsToCreate = [
+    {
       topic: topic,
       partitions: 1,
-      replicationFactor: 1
-    }];
+      replicationFactor: 1,
+    },
+  ];
 
-    producer.createTopics(topicsToCreate, (err, result) => {
-      if ( err) {
-        console.log('an error occured when creating topic ', topic);
-        console.log(err);
-      }
+  producer.createTopics(topicsToCreate, (err, result) => {
+    if (err) {
+      console.log("an error occured when creating topic ", topic);
+      console.log(err);
+    }
 
-      console.log('creating topic ', topic, ' result => ', result);
-    });
-}
+    console.log("creating topic ", topic, " result => ", result);
+  });
+};
 
-const refreshMetadataf = (msg) => {
-
+const refreshMetadata = () => {
   //refresh metadata
-  if (!refreshMetadata) {
-    console.log("Refresh metadata...");
-    client.refreshMetadata((topics = [KAFKA_TOPIC]), (error) => {
-      if (error) {
-        return console.log("Refresh metadata failed with error: ", error);
-      }
+  console.log("Refresh metadata...");
+  
+  client.refreshMetadata((topics = [KAFKA_TOPIC]), (error) => {
+    if (error) {
+      return console.log("Refresh metadata failed with error: ", error);
+    }
 
-      console.log("Refresh metadata successful.");
-      refreshMetadata = true;
-
-    });
-  } 
-}
+    console.log("Refresh metadata successful.");
+  });
+};
 
 const getMessages = () => {
     console.log('Getting messages...');
